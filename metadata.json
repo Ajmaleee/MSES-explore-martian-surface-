@@ -1,0 +1,6 @@
+{
+  "name": "Mars Surface Exploration Simulator",
+  "description": "Realistic, physics-driven Mars exploration rover simulation featuring vast procedural Martian terrain, four-wheel suspension dynamics, articulated robotic arm, deployment module, and aerospace telemetry HUD.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
