@@ -38,9 +38,9 @@ export class TerrainManager {
       flatShading: false,
     });
 
-    // 3. Build core high-detail terrain mesh (320m x 320m, 160x160 segments)
-    const coreSize = 320;
-    const coreSegments = 160;
+    // 3. High-Polygon core Martian terrain mesh (340m x 340m, 220x220 segments)
+    const coreSize = 340;
+    const coreSegments = 220;
     const coreGeo = new THREE.PlaneGeometry(coreSize, coreSize, coreSegments, coreSegments);
     coreGeo.rotateX(-Math.PI / 2);
 
@@ -51,8 +51,8 @@ export class TerrainManager {
     this.mainMesh.castShadow = false;
     this.group.add(this.mainMesh);
 
-    // 4. Build distant terrain ring (extends to 1600m) for cinematic horizon silhouettes
-    const distantGeo = new THREE.RingGeometry(150, 1100, 64, 32);
+    // 4. High-Polygon distant horizon ring (extends to 1400m)
+    const distantGeo = new THREE.RingGeometry(160, 1400, 96, 48);
     distantGeo.rotateX(-Math.PI / 2);
     this.applyRingHeightsAndColors(distantGeo);
 

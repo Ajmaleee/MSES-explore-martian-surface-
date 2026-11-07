@@ -325,28 +325,11 @@ export const ControlDock: React.FC<ControlDockProps> = ({
           {activeTab === 'physics' && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="border border-white/10 rounded-xl p-3 bg-black/30 shadow-inner">
-                <div className="text-[10px] font-bold text-amber-300 mb-1 uppercase">PLANETARY GRAVITY</div>
+                <div className="text-[10px] font-bold text-amber-300 mb-1 uppercase">SURFACE TRACTION MATRIX</div>
                 <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => onUpdateConfig({ gravity: -3.71 })}
-                    className={`flex-1 py-2 rounded-xl font-bold text-[10px] transition ${
-                      Math.abs(config.gravity - (-3.71)) < 0.1
-                        ? 'bg-amber-500 text-slate-950 font-extrabold shadow'
-                        : 'bg-white/10 text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    MARS (3.71 m/s²)
-                  </button>
-                  <button
-                    onClick={() => onUpdateConfig({ gravity: -9.81 })}
-                    className={`flex-1 py-2 rounded-xl font-bold text-[10px] transition ${
-                      Math.abs(config.gravity - (-9.81)) < 0.1
-                        ? 'bg-amber-500 text-slate-950 font-extrabold shadow'
-                        : 'bg-white/10 text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    EARTH (9.81 m/s²)
-                  </button>
+                  <div className="flex-1 py-2 px-2 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-center font-bold text-[10px]">
+                    OPTIMIZED GROUND LOCK
+                  </div>
                 </div>
               </div>
 

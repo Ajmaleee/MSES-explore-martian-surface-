@@ -21,10 +21,10 @@ export class RockManager {
     this.group = new THREE.Group();
     this.group.name = 'RockGroup';
 
-    // 1. Organic, wind-carved Martian ventifact geometries (smooth subdivision, NO flat-shaded boxes)
-    const boulderGeo = this.createErodedVentifactGeometry(1.2, 3);
-    const mediumGeo = this.createErodedVentifactGeometry(0.55, 2);
-    const pebbleGeo = this.createErodedVentifactGeometry(0.22, 1);
+    // 1. Organic, wind-carved Martian ventifact geometries (high polygon smooth curvature)
+    const boulderGeo = this.createErodedVentifactGeometry(1.2, 4);
+    const mediumGeo = this.createErodedVentifactGeometry(0.55, 3);
+    const pebbleGeo = this.createErodedVentifactGeometry(0.22, 2);
 
     // 2. High fidelity PBR rock materials (GTA V / Starfield game texture quality)
     const rockDiffuse = this.createProceduralRockTexture();

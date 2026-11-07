@@ -59,7 +59,7 @@ export class MarsSimulation {
 
   // Config
   public config: SimulationConfig = {
-    gravity: -3.71,
+    gravity: -9.81,
     windSpeed: 8.5,
     windDirectionAngle: 0.4,
     dustDensity: 1.0,

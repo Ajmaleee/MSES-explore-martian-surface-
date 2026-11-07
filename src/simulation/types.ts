@@ -46,11 +46,11 @@ export interface RoverInputState {
 export type CameraViewMode = 'third_person' | 'mast_cam' | 'arm_cam' | 'free_orbit';
 
 export interface SimulationConfig {
-  gravity: number; // default -3.71
+  gravity: number; // default -9.81 under the hood
   windSpeed: number; // default 8.5 m/s
   windDirectionAngle: number; // radians
   dustDensity: number; // 0.1 to 2.0
-  timeOfDayHours: number; // 0 to 24 (Mars Sol time)
+  timeOfDayHours: number; // 0 to 24
   shadowsEnabled: boolean;
   drivePower: number; // engine power multiplier
   cameraMode: CameraViewMode;
