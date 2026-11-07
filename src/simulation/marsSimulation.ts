@@ -87,11 +87,11 @@ export class MarsSimulation {
 
     // 2. Setup Three.js Scene and Renderer
     this.scene = new THREE.Scene();
-    const marsSkyColor = new THREE.Color(0xa1492b);
-    this.scene.background = marsSkyColor;
-    this.scene.fog = new THREE.FogExp2(0xa1492b, 0.0055);
+    const marsHorizonColor = new THREE.Color(0xb35332);
+    this.scene.background = marsHorizonColor;
+    this.scene.fog = new THREE.FogExp2(0xb35332, 0.0042);
 
-    this.camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 1600);
+    this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1800);
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: !this.isSoftwareGl,
@@ -99,7 +99,7 @@ export class MarsSimulation {
     });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.22;
     this.renderer.setPixelRatio(this.isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = !this.isSoftwareGl && this.config.shadowsEnabled;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -107,29 +107,59 @@ export class MarsSimulation {
 
     container.appendChild(this.renderer.domElement);
 
+    // Add Surreal Martian Sky Dome
+    const skyGeo = new THREE.SphereGeometry(1400, 32, 16);
+    const skyMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      vertexShader: `
+        varying vec3 vWorldPosition;
+        void main() {
+          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+          vWorldPosition = worldPosition.xyz;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vWorldPosition;
+        void main() {
+          float h = normalize(vWorldPosition).y;
+          vec3 zenithColor = vec3(0.24, 0.09, 0.11); // Deep cosmic Martian zenith
+          vec3 midColor = vec3(0.68, 0.28, 0.18);    // Mid atmosphere
+          vec3 horizonColor = vec3(0.85, 0.44, 0.26);// Butterscotch golden dust horizon
+          
+          vec3 color = mix(horizonColor, midColor, smoothstep(0.0, 0.35, max(0.0, h)));
+          color = mix(color, zenithColor, smoothstep(0.35, 0.85, max(0.0, h)));
+          gl_FragColor = vec4(color, 1.0);
+        }
+      `,
+    });
+    const skyDome = new THREE.Mesh(skyGeo, skyMat);
+    this.scene.add(skyDome);
+
     // 3. Studio Environment Reflection (RoomEnvironment + PMREMGenerator)
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     pmrem.dispose();
 
-    // 4. Lighting: Warm directional Martian Sun + Cool sky/ground Hemisphere fill
-    this.sunLight = new THREE.DirectionalLight(0xffeedd, 3.2);
-    this.sunLight.position.set(60, 95, 50);
+    // 4. Lighting: Cinematic Low-Angle Sun (GTA 5 style golden-hour long shadows)
+    this.sunLight = new THREE.DirectionalLight(0xffeedd, 3.6);
+    this.sunLight.position.set(90, 52, 75);
     this.sunLight.castShadow = !this.isSoftwareGl;
     this.sunLight.shadow.mapSize.width = 2048;
     this.sunLight.shadow.mapSize.height = 2048;
     this.sunLight.shadow.camera.near = 0.5;
-    this.sunLight.shadow.camera.far = 280;
-    const d = 36;
+    this.sunLight.shadow.camera.far = 320;
+    const d = 42;
     this.sunLight.shadow.camera.left = -d;
     this.sunLight.shadow.camera.right = d;
     this.sunLight.shadow.camera.top = d;
     this.sunLight.shadow.camera.bottom = -d;
-    this.sunLight.shadow.bias = -0.0005;
+    this.sunLight.shadow.bias = -0.0004;
     this.sunLight.shadow.normalBias = 0.02;
     this.scene.add(this.sunLight);
 
-    this.hemiLight = new THREE.HemisphereLight(0xffcaa2, 0x481c12, 1.4);
+    this.hemiLight = new THREE.HemisphereLight(0xffd5b8, 0x421710, 1.6);
     this.scene.add(this.hemiLight);
 
     // 5. Cannon-es Physics World

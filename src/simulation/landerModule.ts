@@ -122,13 +122,13 @@ export class LanderModule {
     this.rearPetal.rotation.x = -Math.PI / 2.3;
     this.group.add(this.rearPetal);
 
-    // 5. Deployable Forward Ramp
+    // 5. Deployable Forward Ramp (spacious 2.8m width for 820kg rover)
     this.rampGroup = new THREE.Group();
     this.rampGroup.position.set(0, 0.78, 2.8); // Hinge location at front edge of deck
 
-    const rampGeo = new THREE.BoxGeometry(2.4, 0.08, 3.8);
+    const rampGeo = new THREE.BoxGeometry(2.8, 0.08, 4.2);
     // Offset ramp geometry so pivot is at top edge
-    rampGeo.translate(0, 0, 1.9);
+    rampGeo.translate(0, 0, 2.1);
 
     const rampMesh = new THREE.Mesh(rampGeo, rampMat);
     rampMesh.castShadow = true;
@@ -136,8 +136,8 @@ export class LanderModule {
     this.rampGroup.add(rampMesh);
 
     // Ramp traction slats
-    for (let s = 0.3; s < 3.6; s += 0.3) {
-      const slatGeo = new THREE.BoxGeometry(2.2, 0.04, 0.05);
+    for (let s = 0.3; s < 4.0; s += 0.35) {
+      const slatGeo = new THREE.BoxGeometry(2.6, 0.04, 0.06);
       const slatMesh = new THREE.Mesh(slatGeo, darkMetalMat);
       slatMesh.position.set(0, 0.06, s);
       this.rampGroup.add(slatMesh);
@@ -155,7 +155,8 @@ export class LanderModule {
 
   private createPetal(outerMat: THREE.Material, innerMat: THREE.Material): THREE.Group {
     const petal = new THREE.Group();
-    const shape = new THREE.BoxGeometry(2.2, 2.4, 0.08);
+    // Curved aerodynamic aeroshell shield segment instead of squarish box
+    const shape = new THREE.CylinderGeometry(2.8, 2.8, 2.4, 16, 1, true, 0, Math.PI * 0.45);
     shape.translate(0, 1.2, 0);
 
     const outerMesh = new THREE.Mesh(shape, outerMat);
@@ -163,8 +164,8 @@ export class LanderModule {
     outerMesh.receiveShadow = true;
     petal.add(outerMesh);
 
-    const innerFoilGeo = new THREE.BoxGeometry(2.0, 2.2, 0.02);
-    innerFoilGeo.translate(0, 1.2, 0.05);
+    const innerFoilGeo = new THREE.CylinderGeometry(2.78, 2.78, 2.3, 16, 1, true, 0, Math.PI * 0.45);
+    innerFoilGeo.translate(0, 1.2, 0.02);
     const innerFoil = new THREE.Mesh(innerFoilGeo, innerMat);
     petal.add(innerFoil);
 
@@ -182,13 +183,12 @@ export class LanderModule {
     this.physicsBodies.push(deckBody);
 
     // Ramp body - sloped ramp down to Martian soil
-    // Slopes from y = groundY + 0.78 down to groundY + 0.05 at z = 5.8
-    const rampLength = 3.8;
-    const rampAngle = 0.22; // ~12 degrees down slope
+    const rampLength = 4.2;
+    const rampAngle = 0.20; // ~11.5 degrees down slope
     const rampBody = new CANNON.Body({
       mass: 0,
-      position: new CANNON.Vec3(0, groundY + 0.4, 4.4),
-      shape: new CANNON.Box(new CANNON.Vec3(1.2, 0.06, rampLength * 0.5)),
+      position: new CANNON.Vec3(0, groundY + 0.38, 4.6),
+      shape: new CANNON.Box(new CANNON.Vec3(1.4, 0.06, rampLength * 0.5)),
     });
     rampBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), rampAngle);
     world.addBody(rampBody);

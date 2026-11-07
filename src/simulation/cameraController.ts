@@ -14,9 +14,9 @@ export class CameraController {
 
   // Orbit controls state
   public azimuth = 0; // horizontal angle relative to rover heading
-  public elevation = 0.28; // radians above horizon
-  public distance = 6.2; // meters
-  public targetDistance = 6.2;
+  public elevation = 0.26; // radians above horizon
+  public distance = 7.5; // meters
+  public targetDistance = 7.5;
 
   private isDragging = false;
   private prevMouseX = 0;

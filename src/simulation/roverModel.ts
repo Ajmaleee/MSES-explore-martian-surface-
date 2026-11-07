@@ -283,9 +283,9 @@ export class RoverModel {
     this.group.add(this.chassisGroup);
 
     // 4. Build 4 Wheels (FL, FR, RL, RR)
-    // Wheel positions relative to rover center
-    const wheelHalfTrack = 0.82;
-    const wheelHalfBase = 0.78;
+    // Wheel positions relative to rover center (matching heavy stable physics stance)
+    const wheelHalfTrack = 1.05;
+    const wheelHalfBase = 0.95;
 
     const wheelOffsets = [
       new THREE.Vector3(-wheelHalfTrack, 0, wheelHalfBase),  // FL (0)
@@ -330,8 +330,8 @@ export class RoverModel {
     });
 
     // Outer wheel tire with spiral grousers/treads
-    const tireRadius = 0.32;
-    const tireWidth = 0.26;
+    const tireRadius = 0.38;
+    const tireWidth = 0.30;
     const tireGeo = new THREE.CylinderGeometry(tireRadius, tireRadius, tireWidth, 24);
     tireGeo.rotateZ(Math.PI / 2); // Align cylinder along X axle
 

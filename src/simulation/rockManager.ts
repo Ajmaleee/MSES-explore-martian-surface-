@@ -21,37 +21,41 @@ export class RockManager {
     this.group = new THREE.Group();
     this.group.name = 'RockGroup';
 
-    // 1. Generate irregular deformed rock geometries
-    const boulderGeo = this.createIrregularRockGeometry(1.0, 0.35, 1);
-    const mediumGeo = this.createIrregularRockGeometry(0.5, 0.4, 1);
-    const pebbleGeo = this.createIrregularRockGeometry(0.2, 0.45, 0);
+    // 1. Organic, wind-carved Martian ventifact geometries (smooth subdivision, NO flat-shaded boxes)
+    const boulderGeo = this.createErodedVentifactGeometry(1.2, 3);
+    const mediumGeo = this.createErodedVentifactGeometry(0.55, 2);
+    const pebbleGeo = this.createErodedVentifactGeometry(0.22, 1);
 
-    // 2. High quality PBR rock materials
+    // 2. High fidelity PBR rock materials (GTA V / Starfield game texture quality)
+    const rockDiffuse = this.createProceduralRockTexture();
+
     const boulderMat = new THREE.MeshStandardMaterial({
-      color: 0x6e3522,
-      roughness: 0.88,
-      metalness: 0.12,
-      flatShading: true,
+      color: 0x8a422b,
+      map: rockDiffuse,
+      roughness: 0.82,
+      metalness: 0.15,
+      flatShading: false, // Smooth realistic shading, zero boxy look
     });
 
     const mediumMat = new THREE.MeshStandardMaterial({
-      color: 0x58291a,
-      roughness: 0.9,
-      metalness: 0.1,
-      flatShading: true,
+      color: 0x733420,
+      map: rockDiffuse,
+      roughness: 0.85,
+      metalness: 0.12,
+      flatShading: false,
     });
 
     const pebbleMat = new THREE.MeshStandardMaterial({
-      color: 0x823e27,
-      roughness: 0.95,
-      metalness: 0.05,
-      flatShading: true,
+      color: 0x9c4e32,
+      roughness: 0.9,
+      metalness: 0.08,
+      flatShading: false,
     });
 
     // 3. Setup instanced meshes
-    const boulderCount = 140;
-    const mediumCount = 500;
-    const pebbleCount = 1800;
+    const boulderCount = 120;
+    const mediumCount = 420;
+    const pebbleCount = 1400;
 
     this.boulderInstances = new THREE.InstancedMesh(boulderGeo, boulderMat, boulderCount);
     this.boulderInstances.castShadow = true;
@@ -75,24 +79,84 @@ export class RockManager {
     scene.add(this.group);
   }
 
-  private createIrregularRockGeometry(baseRadius: number, deformFactor: number, detail: number): THREE.BufferGeometry {
-    const geo = new THREE.DodecahedronGeometry(baseRadius, detail);
+  private createProceduralRockTexture(): THREE.CanvasTexture {
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+
+    // Base weathered rock gradient
+    const grad = ctx.createLinearGradient(0, 0, size, size);
+    grad.addColorStop(0, '#5f2b1d');
+    grad.addColorStop(0.35, '#7d3824');
+    grad.addColorStop(0.7, '#672d1f');
+    grad.addColorStop(1, '#843d28');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+
+    // Weathered horizontal sedimentary strata bands
+    ctx.fillStyle = 'rgba(180, 95, 60, 0.25)';
+    for (let y = 15; y < size; y += 38) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.bezierCurveTo(size * 0.3, y + Math.sin(y) * 12, size * 0.7, y - Math.cos(y) * 12, size, y);
+      ctx.lineTo(size, y + 16);
+      ctx.lineTo(0, y + 16);
+      ctx.fill();
+    }
+
+    // Porous basalt mineral speckles
+    const imgData = ctx.getImageData(0, 0, size, size);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      if (Math.random() < 0.18) {
+        const noise = (Math.random() - 0.5) * 45;
+        data[i] = Math.min(255, Math.max(0, data[i] + noise));
+        data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise * 0.7));
+        data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise * 0.4));
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  }
+
+  /**
+   * Generates organic, wind-eroded Martian ventifact boulder geometry with smooth curvature.
+   * Completely avoids cube or squarish box shapes.
+   */
+  private createErodedVentifactGeometry(baseRadius: number, detail: number): THREE.BufferGeometry {
+    const geo = new THREE.IcosahedronGeometry(baseRadius, detail);
     const pos = geo.attributes.position;
     const v = new THREE.Vector3();
 
     for (let i = 0; i < pos.count; i++) {
       v.fromBufferAttribute(pos, i);
-      // Deterministic deformation based on coordinate hashes
-      const noise =
-        Math.sin(v.x * 4.3 + v.y * 7.1) * 0.5 +
-        Math.cos(v.y * 5.2 + v.z * 3.7) * 0.3 +
-        Math.sin(v.z * 6.1 + v.x * 2.9) * 0.2;
-      const scale = 1.0 + noise * deformFactor;
-      v.multiplyScalar(scale);
+      const len = v.length();
+      const nx = v.x / len;
+      const ny = v.y / len;
+      const nz = v.z / len;
 
-      // Flatten the bottom slightly so it rests naturally
+      // Smooth multi-frequency aerodynamic erosion (wind-abraded Martian ventifact)
+      const windErosion =
+        Math.sin(nx * 3.5 + ny * 2.1) * 0.22 +
+        Math.cos(ny * 4.2 + nz * 2.8) * 0.16 +
+        Math.sin(nz * 5.1 + nx * 4.3) * 0.1;
+
+      // Geological horizontal stratification (strata ridges)
+      const strata = Math.sin(ny * 12.0) * 0.05;
+
+      const totalScale = 1.0 + windErosion + strata;
+      v.multiplyScalar(totalScale);
+
+      // Naturally flattened resting base (bottom sits flush and grounded in sand)
       if (v.y < 0) {
-        v.y *= 0.75;
+        v.y *= 0.65;
       }
 
       pos.setXYZ(i, v.x, v.y, v.z);
@@ -122,59 +186,56 @@ export class RockManager {
     let placed = 0;
     while (placed < count && idx < count * 3) {
       idx++;
-      // Distribute in a ring around lander: radius 12m to 125m
       const angle = (idx * 137.5 * Math.PI) / 180;
-      const radius = 12 + Math.sqrt((placed + 1) / count) * 115;
+      const radius = 14 + Math.sqrt((placed + 1) / count) * 115;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
 
-      // Keep clearance around lander platform (center 0,0)
-      if (Math.sqrt(x * x + z * z) < 9.0) continue;
+      // Keep clearance around lander platform
+      if (Math.sqrt(x * x + z * z) < 11.0) continue;
 
       const y = getTerrainHeight(x, z);
       getTerrainNormal(x, z, _norm);
 
-      // Random non-uniform scale
-      const sX = 0.8 + Math.random() * 1.5;
-      const sY = 0.6 + Math.random() * 1.2;
-      const sZ = 0.8 + Math.random() * 1.5;
+      // Organic smooth scale (elongated aerodynamic shape along wind)
+      const sX = 0.9 + Math.random() * 1.6;
+      const sY = 0.7 + Math.random() * 1.1;
+      const sZ = 1.0 + Math.random() * 1.8;
 
-      dummy.position.set(x, y - sY * 0.25, z);
+      dummy.position.set(x, y - sY * 0.28, z);
       quat.setFromUnitVectors(up, _norm);
       dummy.quaternion.copy(quat);
       dummy.rotateY(Math.random() * Math.PI * 2);
-      dummy.rotateZ((Math.random() - 0.5) * 0.2);
       dummy.scale.set(sX, sY, sZ);
       dummy.updateMatrix();
 
       this.boulderInstances.setMatrixAt(placed, dummy.matrix);
 
-      // Color variation
+      // Rich Martian rock color variety
       const cChoice = Math.random();
-      if (cChoice < 0.25) {
-        color.setHex(0x351b14); // Dark basalt
-      } else if (cChoice < 0.6) {
-        color.setHex(0x5a2b1d); // Iron rust boulder
-      } else if (cChoice < 0.85) {
-        color.setHex(0x7a3923); // Ochre-tinted rock
+      if (cChoice < 0.3) {
+        color.setHex(0x50261a); // Dark volcanic basalt
+      } else if (cChoice < 0.65) {
+        color.setHex(0x7c3823); // Weathered hematite red
+      } else if (cChoice < 0.88) {
+        color.setHex(0x9a4a2e); // Sandstone ochre
       } else {
-        color.setHex(0x2d1712); // Deep iron meteorite
+        color.setHex(0x3e1c14); // Deep iron impactite
       }
       this.boulderInstances.setColorAt(placed, color);
 
-      // Add Cannon-es collision body for large boulders within 70m
-      if (radius < 70 && (sX + sZ) * 0.5 > 1.0) {
-        const avgRad = (sX + sZ) * 0.5 * 0.85;
+      // Physics collision shape for large boulders
+      if (radius < 75 && (sX + sZ) * 0.5 > 1.1) {
+        const avgRad = (sX + sZ) * 0.5 * 0.9;
         const boulderBody = new CANNON.Body({
-          mass: 0, // static obstacle
-          position: new CANNON.Vec3(x, y + avgRad * 0.6, z),
+          mass: 0,
+          position: new CANNON.Vec3(x, y + avgRad * 0.5, z),
           shape: new CANNON.Sphere(avgRad),
         });
         world.addBody(boulderBody);
         this.physicsBodies.push(boulderBody);
       }
 
-      // First 12 boulders become scientific sample targets
       if (placed < 12) {
         const m = minerals[placed % minerals.length];
         this.sampleTargets.push({
@@ -207,25 +268,25 @@ export class RockManager {
     const color = new THREE.Color();
 
     for (let i = 0; i < count; i++) {
-      const angle = (i * 2.39996);
-      const radius = 6 + Math.sqrt((i + 1) / count) * 120;
+      const angle = i * 2.39996;
+      const radius = 8 + Math.sqrt((i + 1) / count) * 125;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
 
       const y = getTerrainHeight(x, z);
       getTerrainNormal(x, z, _norm);
 
-      const s = 0.4 + Math.random() * 0.8;
-      dummy.position.set(x, y - s * 0.15, z);
+      const s = 0.45 + Math.random() * 0.75;
+      dummy.position.set(x, y - s * 0.2, z);
       quat.setFromUnitVectors(up, _norm);
       dummy.quaternion.copy(quat);
       dummy.rotateY(Math.random() * Math.PI * 2);
-      dummy.scale.set(s, s * (0.6 + Math.random() * 0.5), s);
+      dummy.scale.set(s * (0.8 + Math.random() * 0.4), s * 0.7, s * (0.8 + Math.random() * 0.4));
       dummy.updateMatrix();
 
       this.mediumInstances.setMatrixAt(i, dummy.matrix);
 
-      color.setHex(Math.random() > 0.5 ? 0x5a2a1c : 0x753724);
+      color.setHex(Math.random() > 0.5 ? 0x6e311f : 0x8a3f28);
       this.mediumInstances.setColorAt(i, color);
     }
 
@@ -241,20 +302,20 @@ export class RockManager {
 
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const radius = 3 + Math.sqrt(Math.random()) * 130;
+      const radius = 4 + Math.sqrt(Math.random()) * 135;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       const y = getTerrainHeight(x, z);
 
-      const s = 0.12 + Math.random() * 0.28;
+      const s = 0.15 + Math.random() * 0.28;
       dummy.position.set(x, y + s * 0.1, z);
       dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-      dummy.scale.set(s, s * 0.7, s);
+      dummy.scale.set(s, s * 0.65, s * 0.85);
       dummy.updateMatrix();
 
       this.pebbleInstances.setMatrixAt(i, dummy.matrix);
 
-      color.setHex(Math.random() > 0.4 ? 0x7c3a25 : 0x9e4c2f);
+      color.setHex(Math.random() > 0.4 ? 0x823b24 : 0xab5433);
       this.pebbleInstances.setColorAt(i, color);
     }
 
